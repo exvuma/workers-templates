@@ -12,9 +12,8 @@ const Head = Method('patch')
 const Options = Method('options')
 
 const Header = (header, val) => req => req.headers.get(header) === val
-const Authorization = auth => Header('authorization', auth)//TODO remove case senstivity
-const Host = host => Header('host', host)
-const Referrer = host => Header('referrer', host)
+const Host = host => Header('host', host.toLowerCase())
+const Referrer = host => Header('referrer', host.toLowerCase())
 
 const Path = regExp => req => {
     const url = new URL(req.url)
@@ -92,13 +91,21 @@ class Router {
 addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
 })
-
+function handler(request) {
+    const init = {
+        headers: { "content-type": "application/json" }
+    }
+    const body = JSON.stringify({ "some": "json" })
+    return new Response(body, init)
+}
 async function handleRequest(request) {
     const r = new Router()
-    r.get('/foo', req => new Response('/foo'))
-    r.get('/foo.*', req => new Response('/foo-regex'))
-    r.get('/bar', req => new Response('/bar'))
+    // Replace with the approriate paths and handlers 
+    r.get('/bar', () => new Response('responding for /bar'))
+    r.get('/foo', req => fetch(req)) // return what the original repsonse would have been
+    r.get('/foo.*', req => handler(req))
+    r.post('/foo.*', req => handler(req))
 
     const resp = await r.route(request)
     return resp
-}
+} 
